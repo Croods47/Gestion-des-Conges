@@ -1,65 +1,56 @@
 import { create } from 'zustand'
+import { User } from '../types'
 
-export interface User {
-  id: string
-  email: string
-  nom: string
-  prenom: string
-  role: 'employee' | 'manager' | 'admin'
-  departement: string
-}
-
-export interface AuthState {
+interface AuthState {
   user: User | null
-  isAuthenticated: boolean
   login: (email: string, password: string) => Promise<boolean>
   logout: () => void
 }
 
-const utilisateursDemo: User[] = [
+// Mock users for demo
+const mockUsers: User[] = [
   {
-    id: 'emp1',
-    email: 'jean.martin@entreprise.fr',
+    id: '1',
     nom: 'Martin',
     prenom: 'Jean',
+    email: 'jean.martin@entreprise.fr',
     role: 'employee',
-    departement: 'Développement'
+    department: 'Développement',
+    startDate: '2023-01-15',
+    avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'
   },
   {
-    id: 'mgr1',
-    email: 'sophie.dubois@entreprise.fr',
+    id: '2',
     nom: 'Dubois',
     prenom: 'Sophie',
+    email: 'sophie.dubois@entreprise.fr',
     role: 'manager',
-    departement: 'Développement'
+    department: 'Marketing',
+    startDate: '2022-03-10',
+    avatar: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'
   },
   {
-    id: 'admin1',
-    email: 'admin@entreprise.fr',
+    id: '3',
     nom: 'Admin',
     prenom: 'Système',
+    email: 'admin@entreprise.fr',
     role: 'admin',
-    departement: 'RH'
+    department: 'RH',
+    startDate: '2021-06-01',
+    avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'
   }
 ]
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  isAuthenticated: false,
-
   login: async (email: string, password: string) => {
-    // Simulation d'authentification
-    const user = utilisateursDemo.find(u => u.email === email)
-    
+    // Mock authentication
+    const user = mockUsers.find(u => u.email === email)
     if (user && password === 'password') {
-      set({ user, isAuthenticated: true })
+      set({ user })
       return true
     }
-    
     return false
   },
-
-  logout: () => {
-    set({ user: null, isAuthenticated: false })
-  }
+  logout: () => set({ user: null })
 }))

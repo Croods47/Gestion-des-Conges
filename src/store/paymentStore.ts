@@ -1,41 +1,11 @@
 import { create } from 'zustand'
+import { PaymentMethod, Transaction, Subscription } from '../types'
 
-export interface PaymentMethod {
-  id: string
-  type: 'card' | 'bank'
-  last4: string
-  brand?: string
-  expiryMonth?: number
-  expiryYear?: number
-  isDefault: boolean
-}
-
-export interface Transaction {
-  id: string
-  amount: number
-  currency: string
-  status: 'succeeded' | 'pending' | 'failed'
-  description: string
-  date: string
-  paymentMethod: string
-}
-
-export interface Subscription {
-  id: string
-  plan: 'basic' | 'premium' | 'enterprise'
-  status: 'active' | 'canceled' | 'past_due'
-  currentPeriodStart: string
-  currentPeriodEnd: string
-  amount: number
-  currency: string
-}
-
-export interface PaymentState {
+interface PaymentState {
   paymentMethods: PaymentMethod[]
   transactions: Transaction[]
   subscription: Subscription | null
   isLoading: boolean
-  error: string | null
   addPaymentMethod: (method: Omit<PaymentMethod, 'id'>) => void
   removePaymentMethod: (id: string) => void
   setDefaultPaymentMethod: (id: string) => void
@@ -44,7 +14,7 @@ export interface PaymentState {
   updateSubscription: (plan: 'basic' | 'premium' | 'enterprise') => Promise<boolean>
 }
 
-const mockPaymentMethods: PaymentMethod[] = [
+const initialPaymentMethods: PaymentMethod[] = [
   {
     id: '1',
     type: 'card',
@@ -53,53 +23,36 @@ const mockPaymentMethods: PaymentMethod[] = [
     expiryMonth: 12,
     expiryYear: 2025,
     isDefault: true
-  },
-  {
-    id: '2',
-    type: 'card',
-    last4: '0005',
-    brand: 'mastercard',
-    expiryMonth: 8,
-    expiryYear: 2026,
-    isDefault: false
   }
 ]
 
-const mockTransactions: Transaction[] = [
+const initialTransactions: Transaction[] = [
   {
     id: '1',
     amount: 2999,
     currency: 'EUR',
     status: 'succeeded',
     description: 'Abonnement Premium - Janvier 2024',
-    date: '2024-01-15',
-    paymentMethod: 'Visa •••• 4242'
-  },
-  {
-    id: '2',
-    amount: 2999,
-    currency: 'EUR',
-    status: 'succeeded',
-    description: 'Abonnement Premium - Décembre 2023',
-    date: '2023-12-15',
+    date: '2024-01-01T00:00:00Z',
     paymentMethod: 'Visa •••• 4242'
   }
 ]
 
-export const usePaymentStore = create<PaymentState>((set) => ({
-  paymentMethods: mockPaymentMethods,
-  transactions: mockTransactions,
-  subscription: {
-    id: 'sub_1',
-    plan: 'premium',
-    status: 'active',
-    currentPeriodStart: '2024-01-15',
-    currentPeriodEnd: '2024-02-15',
-    amount: 2999,
-    currency: 'EUR'
-  },
+const initialSubscription: Subscription = {
+  id: '1',
+  plan: 'premium',
+  status: 'active',
+  currentPeriodStart: '2024-01-01T00:00:00Z',
+  currentPeriodEnd: '2024-02-01T00:00:00Z',
+  amount: 2999,
+  currency: 'EUR'
+}
+
+export const usePaymentStore = create<PaymentState>((set, get) => ({
+  paymentMethods: initialPaymentMethods,
+  transactions: initialTransactions,
+  subscription: initialSubscription,
   isLoading: false,
-  error: null,
 
   addPaymentMethod: (method) => {
     const newMethod: PaymentMethod = {
@@ -127,65 +80,57 @@ export const usePaymentStore = create<PaymentState>((set) => ({
     }))
   },
 
-  processPayment: async (amount, paymentMethodId) => {
+  processPayment: async (amount) => {
     set({ isLoading: true })
     
     // Simulation d'un paiement
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    const success = Math.random() > 0.1 // 90% de succès
-    
-    if (success) {
-      const newTransaction: Transaction = {
-        id: Date.now().toString(),
-        amount,
-        currency: 'EUR',
-        status: 'succeeded',
-        description: 'Paiement test',
-        date: new Date().toISOString().split('T')[0],
-        paymentMethod: 'Carte de test'
-      }
-      
-      set((state) => ({
-        transactions: [newTransaction, ...state.transactions],
-        isLoading: false
-      }))
-    } else {
-      set({ isLoading: false, error: 'Échec du paiement' })
-    }
-    
-    return success
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const transaction: Transaction = {
+          id: Date.now().toString(),
+          amount,
+          currency: 'EUR',
+          status: Math.random() > 0.1 ? 'succeeded' : 'failed',
+          description: `Paiement test - ${(amount / 100).toFixed(2)}€`,
+          date: new Date().toISOString(),
+          paymentMethod: 'Visa •••• 4242'
+        }
+        
+        set((state) => ({
+          transactions: [transaction, ...state.transactions],
+          isLoading: false
+        }))
+        
+        resolve(transaction.status === 'succeeded')
+      }, 2000)
+    })
   },
 
   fetchTransactions: () => {
     set({ isLoading: true })
-    // Simulation d'un appel API
     setTimeout(() => {
       set({ isLoading: false })
-    }, 1000)
+    }, 500)
   },
 
   updateSubscription: async (plan) => {
     set({ isLoading: true })
     
-    // Simulation d'une mise à jour d'abonnement
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    const planPrices = {
-      basic: 999,
-      premium: 2999,
-      enterprise: 9999
-    }
-    
-    set((state) => ({
-      subscription: state.subscription ? {
-        ...state.subscription,
-        plan,
-        amount: planPrices[plan]
-      } : null,
-      isLoading: false
-    }))
-    
-    return true
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const prices = { basic: 999, premium: 2999, enterprise: 9999 }
+        
+        set((state) => ({
+          subscription: state.subscription ? {
+            ...state.subscription,
+            plan,
+            amount: prices[plan]
+          } : null,
+          isLoading: false
+        }))
+        
+        resolve(true)
+      }, 1500)
+    })
   }
 }))

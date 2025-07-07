@@ -1,5 +1,5 @@
 import { useCongesStore } from '../stores/congesStore'
-import { FiCalendar, FiClock, FiHeart, FiBaby, FiUser } from 'react-icons/fi'
+import { FiCalendar, FiClock, FiHeart, FiUser } from 'react-icons/fi'
 
 export default function SoldeCongesCard() {
   const { solde } = useCongesStore()
@@ -29,7 +29,7 @@ export default function SoldeCongesCard() {
     {
       type: 'Congé maternité',
       solde: solde.congesMaternite,
-      icon: FiBaby,
+      icon: FiUser,
       color: 'text-pink-600',
       bg: 'bg-pink-100'
     },

@@ -1,94 +1,67 @@
 import { create } from 'zustand'
-import { differenceInBusinessDays } from 'date-fns'
+import { DemandeConge, SoldeConges } from '../types'
 
-export type StatutDemande = 'en_attente' | 'approuve' | 'refuse'
-
-export interface DemandeConge {
-  id: string
-  utilisateurId: string
-  utilisateurNom: string
-  utilisateurPrenom: string
-  typeConge: string
-  dateDebut: string
-  dateFin: string
-  nbJours: number
-  motif: string
-  statut: StatutDemande
-  dateCreation: string
-  commentaire?: string
-  approuvePar?: string
-}
-
-export interface SoldeConges {
-  congesPayes: number
-  congesMaladie: number
-  congesMaternite: number
-  congesPaternite: number
-  rtt: number
-  anciennete: number
-}
-
-export interface CongesState {
+interface CongesState {
   demandes: DemandeConge[]
   solde: SoldeConges
   isLoading: boolean
-  error: string | null
   ajouterDemande: (demande: Omit<DemandeConge, 'id' | 'dateCreation' | 'statut'>) => void
-  modifierStatutDemande: (id: string, statut: StatutDemande, commentaire?: string, approuvePar?: string) => void
-  fetchDemandesUtilisateur: (utilisateurId: string) => void
+  modifierStatutDemande: (id: string, statut: 'approuve' | 'refuse', commentaire?: string, approuvePar?: string) => void
   fetchToutesLesDemandes: () => void
-  calculerJoursOuvrables: (dateDebut: string, dateFin: string) => number
 }
 
 const demandesInitiales: DemandeConge[] = [
   {
     id: '1',
-    utilisateurId: 'emp1',
+    utilisateurId: '1',
     utilisateurNom: 'Martin',
     utilisateurPrenom: 'Jean',
-    typeConge: 'Congés payés',
+    utilisateurDepartement: 'Développement',
+    typeConge: 'conges_payes',
     dateDebut: '2024-02-15',
-    dateFin: '2024-02-25',
-    nbJours: 8,
+    dateFin: '2024-02-19',
+    nbJours: 5,
     motif: 'Vacances en famille',
-    statut: 'approuve',
-    dateCreation: '2024-01-15',
-    commentaire: 'Demande approuvée',
-    approuvePar: 'Sophie Dubois'
+    statut: 'en_attente',
+    dateCreation: '2024-01-15T10:00:00Z'
   },
   {
     id: '2',
-    utilisateurId: 'emp1',
-    utilisateurNom: 'Martin',
-    utilisateurPrenom: 'Jean',
-    typeConge: 'Congé maladie',
-    dateDebut: '2024-03-10',
-    dateFin: '2024-03-12',
-    nbJours: 3,
-    motif: 'Grippe',
-    statut: 'en_attente',
-    dateCreation: '2024-03-09'
+    utilisateurId: '2',
+    utilisateurNom: 'Dubois',
+    utilisateurPrenom: 'Sophie',
+    utilisateurDepartement: 'Marketing',
+    typeConge: 'rtt',
+    dateDebut: '2024-02-20',
+    dateFin: '2024-02-20',
+    nbJours: 1,
+    motif: 'Rendez-vous médical',
+    statut: 'approuve',
+    dateCreation: '2024-01-20T14:30:00Z',
+    dateTraitement: '2024-01-21T09:00:00Z',
+    approuvePar: 'Admin Système'
   }
 ]
 
+const soldeInitial: SoldeConges = {
+  congesPayes: 25,
+  rtt: 12,
+  congesMaladie: 30,
+  congesMaternite: 112,
+  congesPaternite: 25,
+  anciennete: 3
+}
+
 export const useCongesStore = create<CongesState>((set, get) => ({
   demandes: demandesInitiales,
-  solde: {
-    congesPayes: 25,
-    congesMaladie: 10,
-    congesMaternite: 16,
-    congesPaternite: 3,
-    rtt: 8,
-    anciennete: 2
-  },
+  solde: soldeInitial,
   isLoading: false,
-  error: null,
 
   ajouterDemande: (nouvelleDemande) => {
     const demande: DemandeConge = {
       ...nouvelleDemande,
       id: Date.now().toString(),
-      dateCreation: new Date().toISOString().split('T')[0],
+      dateCreation: new Date().toISOString(),
       statut: 'en_attente'
     }
     
@@ -101,30 +74,23 @@ export const useCongesStore = create<CongesState>((set, get) => ({
     set((state) => ({
       demandes: state.demandes.map(demande =>
         demande.id === id
-          ? { ...demande, statut, commentaire, approuvePar }
+          ? {
+              ...demande,
+              statut,
+              commentaire,
+              approuvePar,
+              dateTraitement: new Date().toISOString()
+            }
           : demande
       )
     }))
   },
 
-  fetchDemandesUtilisateur: (utilisateurId) => {
-    set({ isLoading: true })
-    // Simulation d'un appel API
-    setTimeout(() => {
-      const demandesUtilisateur = get().demandes.filter(d => d.utilisateurId === utilisateurId)
-      set({ demandes: demandesUtilisateur, isLoading: false })
-    }, 500)
-  },
-
   fetchToutesLesDemandes: () => {
-    set({ isLoading: true })
     // Simulation d'un appel API
+    set({ isLoading: true })
     setTimeout(() => {
-      set({ demandes: demandesInitiales, isLoading: false })
+      set({ isLoading: false })
     }, 500)
-  },
-
-  calculerJoursOuvrables: (dateDebut, dateFin) => {
-    return differenceInBusinessDays(new Date(dateFin), new Date(dateDebut)) + 1
   }
 }))
