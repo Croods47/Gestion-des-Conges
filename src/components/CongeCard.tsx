@@ -1,11 +1,13 @@
-import { DemandeConge } from '../stores/congesStore'
-import { FiCalendar, FiClock, FiUser } from 'react-icons/fi'
+import { DemandeConge, StatutDemande } from '../stores/congesStore'
+import { FiCalendar, FiClock, FiUser, FiCheck, FiX } from 'react-icons/fi'
 
 interface CongeCardProps {
   demande: DemandeConge
+  onStatusChange?: (id: string, statut: StatutDemande, commentaire?: string) => Promise<void>
+  isAdmin?: boolean
 }
 
-export default function CongeCard({ demande }: CongeCardProps) {
+export default function CongeCard({ demande, onStatusChange, isAdmin = false }: CongeCardProps) {
   const getStatusColor = (statut: string) => {
     switch (statut) {
       case 'approuve':
@@ -25,6 +27,18 @@ export default function CongeCard({ demande }: CongeCardProps) {
         return 'Refusée'
       default:
         return 'En attente'
+    }
+  }
+
+  const handleApprove = () => {
+    if (onStatusChange) {
+      onStatusChange(demande.id, 'approuve', 'Demande approuvée')
+    }
+  }
+
+  const handleReject = () => {
+    if (onStatusChange) {
+      onStatusChange(demande.id, 'refuse', 'Demande refusée')
     }
   }
 
@@ -64,6 +78,25 @@ export default function CongeCard({ demande }: CongeCardProps) {
             {demande.approuvePar && (
               <p className="text-xs text-gray-500 mt-1">Par {demande.approuvePar}</p>
             )}
+          </div>
+        )}
+
+        {isAdmin && demande.statut === 'en_attente' && onStatusChange && (
+          <div className="mt-4 flex space-x-2">
+            <button
+              onClick={handleApprove}
+              className="flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-md hover:bg-green-200 text-sm"
+            >
+              <FiCheck className="h-4 w-4 mr-1" />
+              Approuver
+            </button>
+            <button
+              onClick={handleReject}
+              className="flex items-center px-3 py-1 bg-red-100 text-red-800 rounded-md hover:bg-red-200 text-sm"
+            >
+              <FiX className="h-4 w-4 mr-1" />
+              Refuser
+            </button>
           </div>
         )}
       </div>

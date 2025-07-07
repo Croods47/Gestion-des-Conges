@@ -92,7 +92,17 @@ export default function Layout() {
       <div className="pl-64">
         <main className="py-8">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <Outlet />
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/demande" element={<LeaveRequest />} />
+              <Route path="/historique" element={<LeaveHistory />} />
+              <Route path="/infos" element={<LaborLaw />} />
+              <Route path="/payments" element={<Payments />} />
+              {(user?.role === 'manager' || user?.role === 'admin') && (
+                <Route path="/admin" element={<AdminPanel />} />
+              )}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
           </div>
         </main>
       </div>

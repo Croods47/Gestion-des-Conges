@@ -1,338 +1,275 @@
 import { create } from 'zustand'
 
-export type PaymentType = 'one-time' | 'recurring'
-export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'cancelled'
-export type RecurringInterval = 'monthly' | 'quarterly' | 'yearly'
-
-export type PaymentPlan = {
+export interface PaymentMethod {
   id: string
-  name: string
-  description: string
-  price: number
-  interval: RecurringInterval
-  features: string[]
-  popular?: boolean
+  type: 'card' | 'bank'
+  last4?: string
+  brand?: string
+  bankName?: string
+  isDefault: boolean
 }
 
-export type Payment = {
+export interface Transaction {
   id: string
-  userId: number
-  type: PaymentType
   amount: number
   currency: string
-  status: PaymentStatus
+  status: 'succeeded' | 'pending' | 'failed'
   description: string
-  planId?: string
-  recurringInterval?: RecurringInterval
-  nextPaymentDate?: string
-  createdAt: string
-  updatedAt: string
-  stripePaymentIntentId?: string
-  stripeSubscriptionId?: string
+  date: Date
+  paymentMethodId: string
 }
 
-export type PaymentMethod = {
+export interface Subscription {
   id: string
-  userId: number
-  type: 'card'
-  last4: string
-  brand: string
-  expiryMonth: number
-  expiryYear: number
-  isDefault: boolean
-  stripePaymentMethodId: string
+  planName: string
+  amount: number
+  currency: string
+  interval: 'month' | 'year'
+  status: 'active' | 'canceled' | 'past_due'
+  currentPeriodStart: Date
+  currentPeriodEnd: Date
+  cancelAtPeriodEnd: boolean
 }
 
-type PaymentState = {
-  payments: Payment[]
+interface PaymentState {
   paymentMethods: PaymentMethod[]
-  plans: PaymentPlan[]
-  isLoading: boolean
-  error: string | null
+  transactions: Transaction[]
+  subscription: Subscription | null
+  loading: boolean
   
   // Actions
-  fetchPayments: (userId: number) => Promise<void>
-  fetchPaymentMethods: (userId: number) => Promise<void>
-  fetchPlans: () => Promise<void>
-  createOneTimePayment: (userId: number, amount: number, description: string) => Promise<string>
-  createSubscription: (userId: number, planId: string) => Promise<string>
-  cancelSubscription: (subscriptionId: string) => Promise<void>
-  addPaymentMethod: (userId: number, paymentMethodData: Omit<PaymentMethod, 'id' | 'userId'>) => Promise<void>
-  removePaymentMethod: (paymentMethodId: string) => Promise<void>
-  setDefaultPaymentMethod: (paymentMethodId: string) => Promise<void>
+  addPaymentMethod: (method: Omit<PaymentMethod, 'id'>) => void
+  removePaymentMethod: (id: string) => void
+  setDefaultPaymentMethod: (id: string) => void
+  processPayment: (amount: number, description: string, paymentMethodId: string) => Promise<boolean>
+  createSubscription: (planName: string, amount: number, interval: 'month' | 'year') => Promise<boolean>
+  cancelSubscription: () => void
+  fetchTransactions: () => Transaction[]
 }
 
-// Mock payment plans
-const MOCK_PLANS: PaymentPlan[] = [
-  {
-    id: 'basic',
-    name: 'Basique',
-    description: 'Pour les petites équipes',
-    price: 9.99,
-    interval: 'monthly',
-    features: [
-      'Jusqu\'à 10 employés',
-      'Gestion des congés payés',
-      'Historique des demandes',
-      'Support email'
-    ]
-  },
-  {
-    id: 'pro',
-    name: 'Professionnel',
-    description: 'Pour les entreprises en croissance',
-    price: 19.99,
-    interval: 'monthly',
-    features: [
-      'Jusqu\'à 50 employés',
-      'Tous les types de congés',
-      'Rapports avancés',
-      'Intégrations API',
-      'Support prioritaire'
-    ],
-    popular: true
-  },
-  {
-    id: 'enterprise',
-    name: 'Entreprise',
-    description: 'Pour les grandes organisations',
-    price: 49.99,
-    interval: 'monthly',
-    features: [
-      'Employés illimités',
-      'Personnalisation complète',
-      'Conformité RGPD',
-      'Support dédié',
-      'Formation incluse'
-    ]
-  }
-]
-
-// Mock payments
-const MOCK_PAYMENTS: Payment[] = [
+// Données de démonstration
+const demoPaymentMethods: PaymentMethod[] = [
   {
     id: '1',
-    userId: 1,
-    type: 'recurring',
-    amount: 19.99,
-    currency: 'EUR',
-    status: 'completed',
-    description: 'Abonnement Professionnel - Novembre 2024',
-    planId: 'pro',
-    recurringInterval: 'monthly',
-    nextPaymentDate: '2024-12-15',
-    createdAt: '2024-11-15T10:00:00Z',
-    updatedAt: '2024-11-15T10:05:00Z',
-    stripeSubscriptionId: 'sub_mock_123'
+    type: 'card',
+    last4: '4242',
+    brand: 'Visa',
+    isDefault: true
   },
   {
     id: '2',
-    userId: 1,
-    type: 'one-time',
-    amount: 99.99,
-    currency: 'EUR',
-    status: 'completed',
-    description: 'Formation équipe RH',
-    createdAt: '2024-10-20T14:30:00Z',
-    updatedAt: '2024-10-20T14:35:00Z',
-    stripePaymentIntentId: 'pi_mock_456'
+    type: 'card',
+    last4: '5555',
+    brand: 'Mastercard',
+    isDefault: false
+  },
+  {
+    id: '3',
+    type: 'bank',
+    bankName: 'BNP Paribas',
+    isDefault: false
   }
 ]
 
-// Mock payment methods
-const MOCK_PAYMENT_METHODS: PaymentMethod[] = [
+const demoTransactions: Transaction[] = [
   {
     id: '1',
-    userId: 1,
-    type: 'card',
-    last4: '4242',
-    brand: 'visa',
-    expiryMonth: 12,
-    expiryYear: 2025,
-    isDefault: true,
-    stripePaymentMethodId: 'pm_mock_123'
+    amount: 2999,
+    currency: 'EUR',
+    status: 'succeeded',
+    description: 'Abonnement Premium - Janvier 2024',
+    date: new Date('2024-01-01'),
+    paymentMethodId: '1'
+  },
+  {
+    id: '2',
+    amount: 999,
+    currency: 'EUR',
+    status: 'succeeded',
+    description: 'Module RH supplémentaire',
+    date: new Date('2024-01-15'),
+    paymentMethodId: '1'
+  },
+  {
+    id: '3',
+    amount: 4999,
+    currency: 'EUR',
+    status: 'pending',
+    description: 'Formation équipe - Février 2024',
+    date: new Date('2024-02-01'),
+    paymentMethodId: '2'
+  },
+  {
+    id: '4',
+    amount: 1999,
+    currency: 'EUR',
+    status: 'failed',
+    description: 'Consultation expert',
+    date: new Date('2024-01-20'),
+    paymentMethodId: '3'
   }
 ]
 
+const demoSubscription: Subscription = {
+  id: '1',
+  planName: 'Premium',
+  amount: 2999,
+  currency: 'EUR',
+  interval: 'month',
+  status: 'active',
+  currentPeriodStart: new Date('2024-01-01'),
+  currentPeriodEnd: new Date('2024-02-01'),
+  cancelAtPeriodEnd: false
+}
+
 export const usePaymentStore = create<PaymentState>((set, get) => ({
-  payments: [],
-  paymentMethods: [],
-  plans: MOCK_PLANS,
-  isLoading: false,
-  error: null,
+  paymentMethods: demoPaymentMethods,
+  transactions: demoTransactions,
+  subscription: demoSubscription,
+  loading: false,
   
-  fetchPayments: async (userId: number) => {
-    set({ isLoading: true, error: null })
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500))
-      const userPayments = MOCK_PAYMENTS.filter(p => p.userId === userId)
-      set({ payments: userPayments, isLoading: false })
-    } catch (error) {
-      set({ error: 'Erreur lors du chargement des paiements', isLoading: false })
+  addPaymentMethod: (method) => {
+    const newMethod: PaymentMethod = {
+      ...method,
+      id: Date.now().toString()
     }
+    
+    // Si c'est la première méthode, la définir par défaut
+    if (get().paymentMethods.length === 0) {
+      newMethod.isDefault = true
+    }
+    
+    set(state => ({
+      paymentMethods: [...state.paymentMethods, newMethod]
+    }))
   },
   
-  fetchPaymentMethods: async (userId: number) => {
-    set({ isLoading: true, error: null })
+  removePaymentMethod: (id) => {
+    const { paymentMethods } = get()
+    const methodToRemove = paymentMethods.find(m => m.id === id)
     
-    try {
-      await new Promise(resolve => setTimeout(resolve, 300))
-      const userMethods = MOCK_PAYMENT_METHODS.filter(pm => pm.userId === userId)
-      set({ paymentMethods: userMethods, isLoading: false })
-    } catch (error) {
-      set({ error: 'Erreur lors du chargement des moyens de paiement', isLoading: false })
-    }
-  },
-  
-  fetchPlans: async () => {
-    set({ isLoading: true, error: null })
+    if (!methodToRemove) return
     
-    try {
-      await new Promise(resolve => setTimeout(resolve, 200))
-      set({ plans: MOCK_PLANS, isLoading: false })
-    } catch (error) {
-      set({ error: 'Erreur lors du chargement des plans', isLoading: false })
-    }
-  },
-  
-  createOneTimePayment: async (userId: number, amount: number, description: string) => {
-    set({ isLoading: true, error: null })
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000))
+    // Empêcher la suppression si c'est la seule méthode par défaut
+    if (methodToRemove.isDefault && paymentMethods.length > 1) {
+      // Définir une autre méthode comme par défaut
+      const remainingMethods = paymentMethods.filter(m => m.id !== id)
+      remainingMethods[0].isDefault = true
       
-      const payment: Payment = {
+      set({ paymentMethods: remainingMethods })
+    } else if (paymentMethods.length === 1) {
+      // Permettre la suppression de la dernière méthode
+      set({ paymentMethods: [] })
+    } else {
+      set(state => ({
+        paymentMethods: state.paymentMethods.filter(method => method.id !== id)
+      }))
+    }
+  },
+  
+  setDefaultPaymentMethod: (id) => {
+    set(state => ({
+      paymentMethods: state.paymentMethods.map(method => ({
+        ...method,
+        isDefault: method.id === id
+      }))
+    }))
+  },
+  
+  processPayment: async (amount, description, paymentMethodId) => {
+    set({ loading: true })
+    
+    try {
+      // Vérifier que la méthode de paiement existe
+      const { paymentMethods } = get()
+      const paymentMethod = paymentMethods.find(m => m.id === paymentMethodId)
+      
+      if (!paymentMethod) {
+        throw new Error('Méthode de paiement non trouvée')
+      }
+      
+      // Simulation d'un paiement avec délai
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // Simuler un échec occasionnel (10% de chance)
+      const shouldFail = Math.random() < 0.1
+      
+      const transaction: Transaction = {
         id: Date.now().toString(),
-        userId,
-        type: 'one-time',
         amount,
         currency: 'EUR',
-        status: 'completed',
+        status: shouldFail ? 'failed' : 'succeeded',
         description,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        stripePaymentIntentId: `pi_mock_${Date.now()}`
+        date: new Date(),
+        paymentMethodId
       }
       
-      const { payments } = get()
-      set({ payments: [payment, ...payments], isLoading: false })
-      
-      return payment.id
-    } catch (error) {
-      set({ error: 'Erreur lors du paiement', isLoading: false })
-      throw error
-    }
-  },
-  
-  createSubscription: async (userId: number, planId: string) => {
-    set({ isLoading: true, error: null })
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      const plan = MOCK_PLANS.find(p => p.id === planId)
-      if (!plan) throw new Error('Plan non trouvé')
-      
-      const payment: Payment = {
-        id: Date.now().toString(),
-        userId,
-        type: 'recurring',
-        amount: plan.price,
-        currency: 'EUR',
-        status: 'completed',
-        description: `Abonnement ${plan.name}`,
-        planId,
-        recurringInterval: plan.interval,
-        nextPaymentDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        stripeSubscriptionId: `sub_mock_${Date.now()}`
-      }
-      
-      const { payments } = get()
-      set({ payments: [payment, ...payments], isLoading: false })
-      
-      return payment.id
-    } catch (error) {
-      set({ error: 'Erreur lors de la création de l\'abonnement', isLoading: false })
-      throw error
-    }
-  },
-  
-  cancelSubscription: async (subscriptionId: string) => {
-    set({ isLoading: true, error: null })
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 800))
-      
-      const { payments } = get()
-      const updatedPayments = payments.map(payment =>
-        payment.stripeSubscriptionId === subscriptionId
-          ? { ...payment, status: 'cancelled' as PaymentStatus, updatedAt: new Date().toISOString() }
-          : payment
-      )
-      
-      set({ payments: updatedPayments, isLoading: false })
-    } catch (error) {
-      set({ error: 'Erreur lors de l\'annulation de l\'abonnement', isLoading: false })
-      throw error
-    }
-  },
-  
-  addPaymentMethod: async (userId: number, paymentMethodData) => {
-    set({ isLoading: true, error: null })
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 600))
-      
-      const paymentMethod: PaymentMethod = {
-        ...paymentMethodData,
-        id: Date.now().toString(),
-        userId,
-        stripePaymentMethodId: `pm_mock_${Date.now()}`
-      }
-      
-      const { paymentMethods } = get()
-      set({ paymentMethods: [...paymentMethods, paymentMethod], isLoading: false })
-    } catch (error) {
-      set({ error: 'Erreur lors de l\'ajout du moyen de paiement', isLoading: false })
-      throw error
-    }
-  },
-  
-  removePaymentMethod: async (paymentMethodId: string) => {
-    set({ isLoading: true, error: null })
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 400))
-      
-      const { paymentMethods } = get()
-      const filteredMethods = paymentMethods.filter(pm => pm.id !== paymentMethodId)
-      
-      set({ paymentMethods: filteredMethods, isLoading: false })
-    } catch (error) {
-      set({ error: 'Erreur lors de la suppression du moyen de paiement', isLoading: false })
-      throw error
-    }
-  },
-  
-  setDefaultPaymentMethod: async (paymentMethodId: string) => {
-    set({ isLoading: true, error: null })
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 300))
-      
-      const { paymentMethods } = get()
-      const updatedMethods = paymentMethods.map(pm => ({
-        ...pm,
-        isDefault: pm.id === paymentMethodId
+      set(state => ({
+        transactions: [transaction, ...state.transactions],
+        loading: false
       }))
       
-      set({ paymentMethods: updatedMethods, isLoading: false })
+      return !shouldFail
     } catch (error) {
-      set({ error: 'Erreur lors de la mise à jour du moyen de paiement', isLoading: false })
-      throw error
+      set({ loading: false })
+      return false
     }
+  },
+  
+  createSubscription: async (planName, amount, interval) => {
+    set({ loading: true })
+    
+    try {
+      // Simulation de création d'abonnement
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      const subscription: Subscription = {
+        id: Date.now().toString(),
+        planName,
+        amount,
+        currency: 'EUR',
+        interval,
+        status: 'active',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + (interval === 'month' ? 30 : 365) * 24 * 60 * 60 * 1000),
+        cancelAtPeriodEnd: false
+      }
+      
+      // Ajouter une transaction pour l'abonnement
+      const transaction: Transaction = {
+        id: (Date.now() + 1).toString(),
+        amount,
+        currency: 'EUR',
+        status: 'succeeded',
+        description: `Abonnement ${planName} - ${interval === 'month' ? 'Mensuel' : 'Annuel'}`,
+        date: new Date(),
+        paymentMethodId: get().paymentMethods.find(m => m.isDefault)?.id || get().paymentMethods[0]?.id || ''
+      }
+      
+      set(state => ({
+        subscription,
+        transactions: [transaction, ...state.transactions],
+        loading: false
+      }))
+      
+      return true
+    } catch (error) {
+      set({ loading: false })
+      return false
+    }
+  },
+  
+  cancelSubscription: () => {
+    set(state => ({
+      subscription: state.subscription ? {
+        ...state.subscription,
+        cancelAtPeriodEnd: true,
+        status: 'canceled'
+      } : null
+    }))
+  },
+  
+  fetchTransactions: () => {
+    return get().transactions
   }
 }))
