@@ -1,88 +1,112 @@
 import { create } from 'zustand'
 
-export interface Leave {
+export interface LeaveRequest {
   id: string
-  employeeId: string
-  type: string
+  userId: string
+  userName: string
+  userDepartment: string
+  type: 'vacation' | 'sick' | 'personal' | 'maternity' | 'paternity'
   startDate: string
   endDate: string
-  duration: number
-  reason?: string
+  days: number
+  reason: string
   status: 'pending' | 'approved' | 'rejected'
-  createdAt?: string
-  managerComment?: string
+  submittedAt: string
+  reviewedAt?: string
+  reviewedBy?: string
+  comments?: string
 }
 
-interface LeaveState {
-  leaves: Leave[]
-  addLeave: (leave: Omit<Leave, 'id' | 'createdAt'>) => Promise<void>
-  updateLeaveStatus: (id: string, status: 'approved' | 'rejected', comment?: string) => Promise<void>
+export interface LeaveBalance {
+  vacation: number
+  sick: number
+  personal: number
+  maternity: number
+  paternity: number
 }
 
-// Données de démonstration
-const demoLeaves: Leave[] = [
+export interface LeaveState {
+  requests: LeaveRequest[]
+  balance: LeaveBalance
+  isLoading: boolean
+  error: string | null
+  submitRequest: (request: Omit<LeaveRequest, 'id' | 'submittedAt' | 'status'>) => void
+  updateRequestStatus: (id: string, status: 'approved' | 'rejected', comments?: string, reviewedBy?: string) => void
+  fetchUserRequests: (userId: string) => void
+  fetchAllRequests: () => void
+}
+
+const mockRequests: LeaveRequest[] = [
   {
     id: '1',
-    employeeId: '1',
-    type: 'congés payés',
+    userId: 'emp1',
+    userName: 'Jean Martin',
+    userDepartment: 'Développement',
+    type: 'vacation',
     startDate: '2024-02-15',
-    endDate: '2024-02-19',
-    duration: 5,
+    endDate: '2024-02-25',
+    days: 8,
     reason: 'Vacances en famille',
     status: 'approved',
-    createdAt: '2024-01-15T10:00:00Z',
-    managerComment: 'Approuvé - Bonnes vacances !'
-  },
-  {
-    id: '2',
-    employeeId: '1',
-    type: 'RTT',
-    startDate: '2024-03-01',
-    endDate: '2024-03-01',
-    duration: 1,
-    reason: 'Rendez-vous médical',
-    status: 'pending',
-    createdAt: '2024-02-20T14:30:00Z'
-  },
-  {
-    id: '3',
-    employeeId: '2',
-    type: 'congés payés',
-    startDate: '2024-04-10',
-    endDate: '2024-04-17',
-    duration: 6,
-    reason: 'Voyage',
-    status: 'approved',
-    createdAt: '2024-03-01T09:15:00Z'
+    submittedAt: '2024-01-15',
+    reviewedAt: '2024-01-16',
+    reviewedBy: 'Sophie Dubois',
+    comments: 'Demande approuvée'
   }
 ]
 
-export const useLeaveStore = create<LeaveState>((set, get) => ({
-  leaves: demoLeaves,
-  addLeave: async (leave) => {
-    // Simulation d'un appel API
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    const newLeave: Leave = {
-      ...leave,
+export const useLeaveStore = create<LeaveState>((set) => ({
+  requests: mockRequests,
+  balance: {
+    vacation: 25,
+    sick: 10,
+    personal: 5,
+    maternity: 16,
+    paternity: 3
+  },
+  isLoading: false,
+  error: null,
+
+  submitRequest: (newRequest) => {
+    const request: LeaveRequest = {
+      ...newRequest,
       id: Date.now().toString(),
-      createdAt: new Date().toISOString()
+      submittedAt: new Date().toISOString(),
+      status: 'pending'
     }
     
-    set(state => ({
-      leaves: [...state.leaves, newLeave]
+    set((state) => ({
+      requests: [...state.requests, request]
     }))
   },
-  updateLeaveStatus: async (id, status, comment) => {
-    // Simulation d'un appel API
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    set(state => ({
-      leaves: state.leaves.map(leave =>
-        leave.id === id
-          ? { ...leave, status, managerComment: comment }
-          : leave
+
+  updateRequestStatus: (id, status, comments, reviewedBy) => {
+    set((state) => ({
+      requests: state.requests.map(request =>
+        request.id === id
+          ? {
+              ...request,
+              status,
+              comments,
+              reviewedBy,
+              reviewedAt: new Date().toISOString()
+            }
+          : request
       )
     }))
+  },
+
+  fetchUserRequests: (userId) => {
+    set({ isLoading: true })
+    setTimeout(() => {
+      set({ isLoading: false })
+    }, 500)
+  },
+
+  fetchAllRequests: () => {
+    set({ isLoading: true })
+    setTimeout(() => {
+      set({ isLoading: false })
+    }, 500)
   }
 }))

@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { 
   FiHome, 
@@ -9,6 +9,12 @@ import {
   FiLogOut,
   FiCreditCard
 } from 'react-icons/fi'
+import Dashboard from '../pages/Dashboard'
+import LeaveRequest from '../pages/LeaveRequest'
+import LeaveHistory from '../pages/LeaveHistory'
+import LaborLaw from '../pages/LaborLaw'
+import AdminPanel from '../pages/AdminPanel'
+import Payments from '../pages/Payments'
 
 export default function Layout() {
   const { user, logout } = useAuthStore()

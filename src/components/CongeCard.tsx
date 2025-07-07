@@ -32,13 +32,13 @@ export default function CongeCard({ demande, onStatusChange, isAdmin = false }: 
 
   const handleApprove = () => {
     if (onStatusChange) {
-      onStatusChange(demande.id, 'approuve', 'Demande approuvée')
+      onStatusChange(demande.id, 'approuve' as StatutDemande, 'Demande approuvée')
     }
   }
 
   const handleReject = () => {
     if (onStatusChange) {
-      onStatusChange(demande.id, 'refuse', 'Demande refusée')
+      onStatusChange(demande.id, 'refuse' as StatutDemande, 'Demande refusée')
     }
   }
 

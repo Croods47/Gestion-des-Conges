@@ -6,60 +6,60 @@ export interface User {
   nom: string
   prenom: string
   role: 'employee' | 'manager' | 'admin'
-  annualLeave: number
-  avatar?: string
+  departement: string
 }
 
-interface AuthState {
+export interface AuthState {
   user: User | null
+  isAuthenticated: boolean
   login: (email: string, password: string) => Promise<boolean>
   logout: () => void
 }
 
-// Utilisateurs de démonstration
-const demoUsers: User[] = [
+const utilisateursDemo: User[] = [
   {
-    id: '1',
-    email: 'employe@demo.com',
-    nom: 'Dupont',
+    id: 'emp1',
+    email: 'jean.martin@entreprise.fr',
+    nom: 'Martin',
     prenom: 'Jean',
     role: 'employee',
-    annualLeave: 25
+    departement: 'Développement'
   },
   {
-    id: '2',
-    email: 'manager@demo.com',
-    nom: 'Martin',
-    prenom: 'Marie',
+    id: 'mgr1',
+    email: 'sophie.dubois@entreprise.fr',
+    nom: 'Dubois',
+    prenom: 'Sophie',
     role: 'manager',
-    annualLeave: 25
+    departement: 'Développement'
   },
   {
-    id: '3',
-    email: 'admin@demo.com',
-    nom: 'Durand',
-    prenom: 'Pierre',
+    id: 'admin1',
+    email: 'admin@entreprise.fr',
+    nom: 'Admin',
+    prenom: 'Système',
     role: 'admin',
-    annualLeave: 25
+    departement: 'RH'
   }
 ]
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
+  isAuthenticated: false,
+
   login: async (email: string, password: string) => {
-    // Simulation d'une authentification
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // Simulation d'authentification
+    const user = utilisateursDemo.find(u => u.email === email)
     
-    const user = demoUsers.find(u => u.email === email)
-    
-    if (user && password === 'demo123') {
-      set({ user })
+    if (user && password === 'password') {
+      set({ user, isAuthenticated: true })
       return true
     }
     
     return false
   },
+
   logout: () => {
-    set({ user: null })
+    set({ user: null, isAuthenticated: false })
   }
 }))
