@@ -1,49 +1,55 @@
-import React from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
-
-import { useAuthStore } from './store/authStore'
-import Login from './components/Login'
-import Dashboard from './components/Dashboard'
-import LeaveRequest from './components/LeaveRequest'
-import LeaveHistory from './components/LeaveHistory'
-import LaborLaw from './components/LaborLaw'
-import AdminPanel from './components/AdminPanel'
-import PaymentPage from './components/PaymentPage'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { useAuthStore } from './stores/authStore'
 import Navbar from './components/Navbar'
+import ProtectedRoute from './components/ProtectedRoute'
+import Login from './pages/Login'
+import Dashboard from './pages/Dashboard'
+import DemandeConge from './pages/DemandeConge'
+import HistoriqueConges from './pages/HistoriqueConges'
+import Administration from './pages/Administration'
 
 function App() {
   const { user } = useAuthStore()
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Login />
-        <ToastContainer position="top-right" />
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="container mx-auto px-4 py-8">
+    <Router>
+      <div className="min-h-screen bg-gray-50">
+        {user && <Navbar />}
+        
         <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/dashboard" element={<Navigate to="/" replace />} />
-          <Route path="/demande-conge" element={<LeaveRequest />} />
-          <Route path="/historique" element={<LeaveHistory />} />
-          <Route path="/droit-travail" element={<LaborLaw />} />
-          <Route path="/paiement" element={<PaymentPage />} />
-          {(user.role === 'manager' || user.role === 'admin') && (
-            <Route path="/admin" element={<AdminPanel />} />
-          )}
+          <Route 
+            path="/login" 
+            element={user ? <Navigate to="/" replace /> : <Login />} 
+          />
+          
+          <Route path="/" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/demande" element={
+            <ProtectedRoute>
+              <DemandeConge />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/historique" element={
+            <ProtectedRoute>
+              <HistoriqueConges />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <Administration />
+            </ProtectedRoute>
+          } />
+          
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </main>
-      <ToastContainer position="top-right" />
-    </div>
+      </div>
+    </Router>
   )
 }
 

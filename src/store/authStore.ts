@@ -11,29 +11,38 @@ interface AuthState {
 const mockUsers: User[] = [
   {
     id: '1',
-    name: 'Marie Dupont',
+    nom: 'Dupont',
+    prenom: 'Marie',
     email: 'marie@entreprise.fr',
-    role: 'employee',
+    role: 'employe',
     department: 'Marketing',
     leaveBalance: 25,
+    soldeConges: 25,
+    dateEmbauche: '2023-01-15',
     startDate: '2023-01-15'
   },
   {
     id: '2',
-    name: 'Pierre Martin',
+    nom: 'Martin',
+    prenom: 'Pierre',
     email: 'pierre@entreprise.fr',
     role: 'manager',
     department: 'IT',
     leaveBalance: 30,
+    soldeConges: 30,
+    dateEmbauche: '2022-03-10',
     startDate: '2022-03-10'
   },
   {
     id: '3',
-    name: 'Sophie Bernard',
+    nom: 'Bernard',
+    prenom: 'Sophie',
     email: 'admin@entreprise.fr',
     role: 'admin',
     department: 'RH',
     leaveBalance: 35,
+    soldeConges: 35,
+    dateEmbauche: '2021-06-01',
     startDate: '2021-06-01'
   }
 ]

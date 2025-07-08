@@ -56,7 +56,7 @@ const mockSubscription: Subscription = {
   currency: 'eur'
 }
 
-export const usePaymentStore = create<PaymentState>((set, get) => ({
+export const usePaymentStore = create<PaymentState>((set) => ({
   paymentMethods: mockPaymentMethods,
   transactions: mockTransactions,
   subscription: mockSubscription,

@@ -1,15 +1,15 @@
-import { DemandeConge, StatutDemande } from '../stores/congesStore'
-import { FiCalendar, FiClock, FiUser, FiCheck, FiX } from 'react-icons/fi'
+import { DemandeConge, StatutDemande } from '../types'
 
 interface CongeCardProps {
   demande: DemandeConge
-  onStatusChange?: (id: string, statut: StatutDemande, commentaire?: string) => Promise<void>
-  isAdmin?: boolean
+  onApprove?: (id: string) => void
+  onReject?: (id: string) => void
+  showActions?: boolean
 }
 
-export default function CongeCard({ demande, onStatusChange, isAdmin = false }: CongeCardProps) {
-  const getStatusColor = (statut: string) => {
-    switch (statut) {
+export default function CongeCard({ demande, onApprove, onReject, showActions = false }: CongeCardProps) {
+  const getStatusColor = (status: StatutDemande) => {
+    switch (status) {
       case 'approuve':
         return 'bg-green-100 text-green-800'
       case 'refuse':
@@ -19,87 +19,76 @@ export default function CongeCard({ demande, onStatusChange, isAdmin = false }: 
     }
   }
 
-  const getStatusText = (statut: string) => {
-    switch (statut) {
+  const getStatusText = (status: StatutDemande) => {
+    switch (status) {
       case 'approuve':
-        return 'Approuvée'
+        return 'Approuvé'
       case 'refuse':
-        return 'Refusée'
+        return 'Refusé'
       default:
         return 'En attente'
     }
   }
 
-  const handleApprove = () => {
-    if (onStatusChange) {
-      onStatusChange(demande.id, 'approuve', 'Demande approuvée')
-    }
-  }
-
-  const handleReject = () => {
-    if (onStatusChange) {
-      onStatusChange(demande.id, 'refuse', 'Demande refusée')
-    }
-  }
-
   return (
-    <div className="bg-white overflow-hidden shadow rounded-lg">
-      <div className="p-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <FiCalendar className="h-5 w-5 text-gray-400 mr-2" />
-            <span className="text-sm font-medium text-gray-900">
-              {new Date(demande.dateDebut).toLocaleDateString('fr-FR')} - {new Date(demande.dateFin).toLocaleDateString('fr-FR')}
-            </span>
-          </div>
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(demande.statut)}`}>
-            {getStatusText(demande.statut)}
-          </span>
+    <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">
+            {demande.employePrenom} {demande.employeNom}
+          </h3>
+          <p className="text-sm text-gray-600">{demande.typeConge}</p>
         </div>
-        
-        <div className="mt-2">
-          <p className="text-sm text-gray-600">{demande.motif}</p>
-        </div>
-        
-        <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
-          <div className="flex items-center">
-            <FiClock className="h-4 w-4 mr-1" />
-            <span>{demande.nbJours} jour{demande.nbJours > 1 ? 's' : ''}</span>
-          </div>
-          <div className="flex items-center">
-            <FiUser className="h-4 w-4 mr-1" />
-            <span>Créée le {new Date(demande.dateCreation).toLocaleDateString('fr-FR')}</span>
-          </div>
-        </div>
-        
-        {demande.commentaire && (
-          <div className="mt-3 p-3 bg-gray-50 rounded-md">
-            <p className="text-sm text-gray-600">{demande.commentaire}</p>
-            {demande.approuvePar && (
-              <p className="text-xs text-gray-500 mt-1">Par {demande.approuvePar}</p>
-            )}
-          </div>
-        )}
-
-        {isAdmin && demande.statut === 'en_attente' && onStatusChange && (
-          <div className="mt-4 flex space-x-2">
-            <button
-              onClick={handleApprove}
-              className="flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-md hover:bg-green-200 text-sm"
-            >
-              <FiCheck className="h-4 w-4 mr-1" />
-              Approuver
-            </button>
-            <button
-              onClick={handleReject}
-              className="flex items-center px-3 py-1 bg-red-100 text-red-800 rounded-md hover:bg-red-200 text-sm"
-            >
-              <FiX className="h-4 w-4 mr-1" />
-              Refuser
-            </button>
-          </div>
-        )}
+        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(demande.statut)}`}>
+          {getStatusText(demande.statut)}
+        </span>
       </div>
+
+      <div className="space-y-2 mb-4">
+        <div className="flex justify-between">
+          <span className="text-sm text-gray-600">Du:</span>
+          <span className="text-sm font-medium">{demande.dateDebut}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-sm text-gray-600">Au:</span>
+          <span className="text-sm font-medium">{demande.dateFin}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-sm text-gray-600">Durée:</span>
+          <span className="text-sm font-medium">{demande.nbJours} jour(s)</span>
+        </div>
+      </div>
+
+      {demande.motif && (
+        <div className="mb-4">
+          <p className="text-sm text-gray-600">Motif:</p>
+          <p className="text-sm text-gray-900">{demande.motif}</p>
+        </div>
+      )}
+
+      {demande.commentaire && (
+        <div className="mb-4">
+          <p className="text-sm text-gray-600">Commentaire:</p>
+          <p className="text-sm text-gray-900">{demande.commentaire}</p>
+        </div>
+      )}
+
+      {showActions && demande.statut === 'en_attente' && (
+        <div className="flex space-x-3">
+          <button
+            onClick={() => onApprove?.(demande.id)}
+            className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
+          >
+            Approuver
+          </button>
+          <button
+            onClick={() => onReject?.(demande.id)}
+            className="flex-1 bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition-colors"
+          >
+            Refuser
+          </button>
+        </div>
+      )}
     </div>
   )
 }
