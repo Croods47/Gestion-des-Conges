@@ -1,75 +1,39 @@
-import { useCongesStore } from '../stores/congesStore'
-import { FiCalendar, FiClock, FiHeart, FiUser } from 'react-icons/fi'
+import { SoldeConges } from '../stores/congesStore'
 
-export default function SoldeCongesCard() {
-  const { solde } = useCongesStore()
+type SoldeCongesCardProps = {
+  solde: SoldeConges
+}
 
-  const congesData = [
-    {
-      type: 'Congés payés',
-      solde: solde.congesPayes,
-      icon: FiCalendar,
-      color: 'text-blue-600',
-      bg: 'bg-blue-100'
-    },
-    {
-      type: 'RTT',
-      solde: solde.rtt,
-      icon: FiClock,
-      color: 'text-green-600',
-      bg: 'bg-green-100'
-    },
-    {
-      type: 'Congé maladie',
-      solde: solde.congesMaladie,
-      icon: FiHeart,
-      color: 'text-red-600',
-      bg: 'bg-red-100'
-    },
-    {
-      type: 'Congé maternité',
-      solde: solde.congesMaternite,
-      icon: FiUser,
-      color: 'text-pink-600',
-      bg: 'bg-pink-100'
-    },
-    {
-      type: 'Congé paternité',
-      solde: solde.congesPaternite,
-      icon: FiUser,
-      color: 'text-purple-600',
-      bg: 'bg-purple-100'
-    }
-  ]
-
+const SoldeCongesCard = ({ solde }: SoldeCongesCardProps) => {
   return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <h2 className="text-lg font-medium text-gray-900 mb-4">Solde des congés</h2>
-      <div className="space-y-4">
-        {congesData.map((conge) => {
-          const Icon = conge.icon
-          return (
-            <div key={conge.type} className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className={`p-2 rounded-md ${conge.bg}`}>
-                  <Icon className={`h-5 w-5 ${conge.color}`} />
-                </div>
-                <span className="ml-3 text-sm font-medium text-gray-900">
-                  {conge.type}
-                </span>
-              </div>
-              <span className="text-sm font-bold text-gray-900">
-                {conge.solde} jour{conge.solde > 1 ? 's' : ''}
-              </span>
-            </div>
-          )
-        })}
+    <div className="card">
+      <h3 className="text-lg font-medium text-gray-900">Mon solde de congés</h3>
+      
+      <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
+        <div className="bg-primary-50 rounded-lg p-4 border border-primary-100">
+          <h4 className="text-sm font-medium text-primary-800">Congés payés</h4>
+          <p className="mt-2 text-3xl font-bold text-primary-600">{solde.congesPayes}</p>
+          <p className="mt-1 text-sm text-primary-700">jours disponibles</p>
+        </div>
+        
+        <div className="bg-secondary-50 rounded-lg p-4 border border-secondary-100">
+          <h4 className="text-sm font-medium text-secondary-800">RTT</h4>
+          <p className="mt-2 text-3xl font-bold text-secondary-600">{solde.rtt}</p>
+          <p className="mt-1 text-sm text-secondary-700">jours disponibles</p>
+        </div>
+        
+        <div className="bg-green-50 rounded-lg p-4 border border-green-100">
+          <h4 className="text-sm font-medium text-green-800">Congés d'ancienneté</h4>
+          <p className="mt-2 text-3xl font-bold text-green-600">{solde.anciennete}</p>
+          <p className="mt-1 text-sm text-green-700">jours disponibles</p>
+        </div>
       </div>
-      <div className="mt-4 pt-4 border-t border-gray-200">
-        <p className="text-xs text-gray-500">
-          Ancienneté : {solde.anciennete} an{solde.anciennete > 1 ? 's' : ''}
-        </p>
+      
+      <div className="mt-5 text-sm text-gray-500">
+        <p>Dernière mise à jour: {new Date().toLocaleDateString('fr-FR')}</p>
       </div>
     </div>
   )
 }
+
+export default SoldeCongesCard

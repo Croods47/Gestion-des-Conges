@@ -1,96 +1,210 @@
 import { create } from 'zustand'
-import { DemandeConge, SoldeConges } from '../types'
+import { persist } from 'zustand/middleware'
+
+export type StatutDemande = 'en_attente' | 'approuve' | 'refuse'
+export type TypeConge = 'conges_payes' | 'rtt' | 'maladie' | 'maternite' | 'paternite' | 'formation'
+
+export interface DemandeConge {
+  id: string
+  employeId: string
+  employeNom: string
+  employePrenom: string
+  utilisateurNom: string
+  utilisateurPrenom: string
+  dateDebut: string
+  dateFin: string
+  nbJours: number
+  motif: string
+  typeConge: TypeConge
+  statut: StatutDemande
+  dateCreation: string
+  commentaire?: string
+  approuvePar?: string
+  dateApprobation?: string
+}
+
+export interface SoldeConges {
+  congesPayes: number
+  rtt: number
+  anciennete: number
+}
 
 interface CongesState {
   demandes: DemandeConge[]
   solde: SoldeConges
   isLoading: boolean
+  fetchDemandesUtilisateur: (userId: string) => void
+  fetchSoldeConges: (userId: string) => void
+  fetchToutesDemandes: () => void
   ajouterDemande: (demande: Omit<DemandeConge, 'id' | 'dateCreation' | 'statut'>) => void
-  modifierStatutDemande: (id: string, statut: 'approuve' | 'refuse', commentaire?: string, approuvePar?: string) => void
-  fetchToutesLesDemandes: () => void
+  creerDemande: (demande: Omit<DemandeConge, 'id' | 'dateCreation' | 'statut'>) => void
+  approuverDemande: (id: string, commentaire?: string, approuvePar?: string) => void
+  refuserDemande: (id: string, commentaire?: string, approuvePar?: string) => void
+  changerStatutDemande: (id: string, statut: StatutDemande, commentaire?: string) => Promise<void>
+  getDemandesParEmploye: (employeId: string) => DemandeConge[]
+  getToutesLesDemandes: () => DemandeConge[]
 }
 
-const demandesInitiales: DemandeConge[] = [
+// Données de démonstration
+const demoData: DemandeConge[] = [
   {
     id: '1',
-    utilisateurId: '1',
-    utilisateurNom: 'Martin',
+    employeId: '1',
+    employeNom: 'Dupont',
+    employePrenom: 'Jean',
+    utilisateurNom: 'Dupont',
     utilisateurPrenom: 'Jean',
-    utilisateurDepartement: 'Développement',
-    typeConge: 'conges_payes',
     dateDebut: '2024-02-15',
-    dateFin: '2024-02-19',
-    nbJours: 5,
-    motif: 'Vacances en famille',
-    statut: 'en_attente',
-    dateCreation: '2024-01-15T10:00:00Z'
+    dateFin: '2024-02-20',
+    nbJours: 4,
+    motif: 'Vacances familiales',
+    typeConge: 'conges_payes',
+    statut: 'approuve',
+    dateCreation: '2024-01-15',
+    commentaire: 'Demande approuvée',
+    approuvePar: 'Marie Martin',
+    dateApprobation: '2024-01-16'
   },
   {
     id: '2',
-    utilisateurId: '2',
-    utilisateurNom: 'Dubois',
-    utilisateurPrenom: 'Sophie',
-    utilisateurDepartement: 'Marketing',
-    typeConge: 'rtt',
-    dateDebut: '2024-02-20',
-    dateFin: '2024-02-20',
-    nbJours: 1,
-    motif: 'Rendez-vous médical',
-    statut: 'approuve',
-    dateCreation: '2024-01-20T14:30:00Z',
-    dateTraitement: '2024-01-21T09:00:00Z',
-    approuvePar: 'Admin Système'
+    employeId: '1',
+    employeNom: 'Dupont',
+    employePrenom: 'Jean',
+    utilisateurNom: 'Dupont',
+    utilisateurPrenom: 'Jean',
+    dateDebut: '2024-03-10',
+    dateFin: '2024-03-15',
+    nbJours: 4,
+    motif: 'Congés personnels',
+    typeConge: 'conges_payes',
+    statut: 'en_attente',
+    dateCreation: '2024-02-10'
+  },
+  {
+    id: '3',
+    employeId: '2',
+    employeNom: 'Martin',
+    employePrenom: 'Marie',
+    utilisateurNom: 'Martin',
+    utilisateurPrenom: 'Marie',
+    dateDebut: '2024-04-01',
+    dateFin: '2024-04-10',
+    nbJours: 7,
+    motif: 'Vacances de printemps',
+    typeConge: 'conges_payes',
+    statut: 'en_attente',
+    dateCreation: '2024-02-01'
   }
 ]
 
-const soldeInitial: SoldeConges = {
+const demoSolde: SoldeConges = {
   congesPayes: 25,
-  rtt: 12,
-  congesMaladie: 30,
-  congesMaternite: 112,
-  congesPaternite: 25,
-  anciennete: 3
+  rtt: 8,
+  anciennete: 5
 }
 
-export const useCongesStore = create<CongesState>((set, get) => ({
-  demandes: demandesInitiales,
-  solde: soldeInitial,
-  isLoading: false,
-
-  ajouterDemande: (nouvelleDemande) => {
-    const demande: DemandeConge = {
-      ...nouvelleDemande,
-      id: Date.now().toString(),
-      dateCreation: new Date().toISOString(),
-      statut: 'en_attente'
+export const useCongesStore = create<CongesState>()(
+  persist(
+    (set, get) => ({
+      demandes: demoData,
+      solde: demoSolde,
+      isLoading: false,
+      fetchDemandesUtilisateur: (userId: string) => {
+        set({ isLoading: true })
+        // Simulation d'un appel API
+        setTimeout(() => {
+          const userDemandes = demoData.filter(d => d.employeId === userId)
+          set({ demandes: userDemandes, isLoading: false })
+        }, 500)
+      },
+      fetchSoldeConges: () => {
+        set({ isLoading: true })
+        // Simulation d'un appel API
+        setTimeout(() => {
+          set({ solde: demoSolde, isLoading: false })
+        }, 300)
+      },
+      fetchToutesDemandes: () => {
+        set({ isLoading: true })
+        setTimeout(() => {
+          set({ demandes: demoData, isLoading: false })
+        }, 500)
+      },
+      ajouterDemande: (nouvelleDemande) => {
+        const demande: DemandeConge = {
+          ...nouvelleDemande,
+          id: Date.now().toString(),
+          dateCreation: new Date().toISOString().split('T')[0],
+          statut: 'en_attente'
+        }
+        set(state => ({
+          demandes: [...state.demandes, demande]
+        }))
+      },
+      creerDemande: (nouvelleDemande) => {
+        const demande: DemandeConge = {
+          ...nouvelleDemande,
+          id: Date.now().toString(),
+          dateCreation: new Date().toISOString().split('T')[0],
+          statut: 'en_attente'
+        }
+        set(state => ({
+          demandes: [...state.demandes, demande]
+        }))
+      },
+      approuverDemande: (id, commentaire, approuvePar) => {
+        set(state => ({
+          demandes: state.demandes.map(demande =>
+            demande.id === id
+              ? {
+                  ...demande,
+                  statut: 'approuve' as const,
+                  commentaire,
+                  approuvePar,
+                  dateApprobation: new Date().toISOString().split('T')[0]
+                }
+              : demande
+          )
+        }))
+      },
+      refuserDemande: (id, commentaire, approuvePar) => {
+        set(state => ({
+          demandes: state.demandes.map(demande =>
+            demande.id === id
+              ? {
+                  ...demande,
+                  statut: 'refuse' as const,
+                  commentaire,
+                  approuvePar,
+                  dateApprobation: new Date().toISOString().split('T')[0]
+                }
+              : demande
+          )
+        }))
+      },
+      changerStatutDemande: async (id: string, statut: StatutDemande, commentaire?: string) => {
+        set(state => ({
+          demandes: state.demandes.map(demande =>
+            demande.id === id
+              ? {
+                  ...demande,
+                  statut,
+                  commentaire,
+                  dateApprobation: new Date().toISOString().split('T')[0]
+                }
+              : demande
+          )
+        }))
+      },
+      getDemandesParEmploye: (employeId) => {
+        return get().demandes.filter(demande => demande.employeId === employeId)
+      },
+      getToutesLesDemandes: () => {
+        return get().demandes
+      }
+    }),
+    {
+      name: 'conges-storage'
     }
-    
-    set((state) => ({
-      demandes: [...state.demandes, demande]
-    }))
-  },
-
-  modifierStatutDemande: (id, statut, commentaire, approuvePar) => {
-    set((state) => ({
-      demandes: state.demandes.map(demande =>
-        demande.id === id
-          ? {
-              ...demande,
-              statut,
-              commentaire,
-              approuvePar,
-              dateTraitement: new Date().toISOString()
-            }
-          : demande
-      )
-    }))
-  },
-
-  fetchToutesLesDemandes: () => {
-    // Simulation d'un appel API
-    set({ isLoading: true })
-    setTimeout(() => {
-      set({ isLoading: false })
-    }, 500)
-  }
-}))
+  )
+)

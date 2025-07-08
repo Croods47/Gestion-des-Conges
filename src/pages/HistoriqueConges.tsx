@@ -1,86 +1,115 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuthStore } from '../stores/authStore'
-import { useCongesStore } from '../stores/congesStore'
+import { useCongesStore, StatutDemande } from '../stores/congesStore'
 import CongeCard from '../components/CongeCard'
-import { FiSearch, FiCalendar } from 'react-icons/fi'
+import { FiFilter, FiSearch } from 'react-icons/fi'
 
-export default function HistoriqueConges() {
+const HistoriqueConges = () => {
   const { user } = useAuthStore()
-  const { demandes, fetchDemandesUtilisateur } = useCongesStore()
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
-
+  const { demandes, isLoading, fetchDemandesUtilisateur } = useCongesStore()
+  const [filtreStatut, setFiltreStatut] = useState<StatutDemande | 'tous'>('tous')
+  const [recherche, setRecherche] = useState('')
+  
   useEffect(() => {
-    if (user?.id) {
+    if (user) {
       fetchDemandesUtilisateur(user.id)
     }
-  }, [user?.id, fetchDemandesUtilisateur])
-
-  const filteredDemandes = useMemo(() => {
-    return demandes.filter(demande => {
-      const matchesSearch = demande.motif.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           demande.typeConge.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesStatus = statusFilter === 'all' || demande.statut === statusFilter
-      
-      return matchesSearch && matchesStatus
-    })
-  }, [demandes, searchTerm, statusFilter])
-
+  }, [user, fetchDemandesUtilisateur])
+  
+  const demandesFiltrees = demandes.filter(demande => {
+    const matchStatut = filtreStatut === 'tous' || demande.statut === filtreStatut
+    const matchRecherche = recherche === '' || 
+      demande.typeConge.toLowerCase().includes(recherche.toLowerCase()) ||
+      (demande.motif && demande.motif.toLowerCase().includes(recherche.toLowerCase()))
+    
+    return matchStatut && matchRecherche
+  })
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+  
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Historique des congés</h1>
-        <p className="text-gray-600">Consultez toutes vos demandes de congés</p>
+        <p className="mt-1 text-sm text-gray-500">
+          Consultez toutes vos demandes de congés passées et en cours.
+        </p>
       </div>
-
+      
       {/* Filters */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="card">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <FiSearch className="inline h-4 w-4 mr-1" />
+            <label htmlFor="recherche" className="label">
               Rechercher
             </label>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Rechercher par motif ou type..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <div className="mt-1 relative">
+              <input
+                type="text"
+                id="recherche"
+                className="input pl-10"
+                placeholder="Type de congé, motif..."
+                value={recherche}
+                onChange={(e) => setRecherche(e.target.value)}
+              />
+              <FiSearch className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            </div>
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Statut
+            <label htmlFor="statut" className="label">
+              Filtrer par statut
             </label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">Tous les statuts</option>
-              <option value="en_attente">En attente</option>
-              <option value="approuve">Approuvées</option>
-              <option value="refuse">Refusées</option>
-            </select>
+            <div className="mt-1 relative">
+              <select
+                id="statut"
+                className="input pl-10"
+                value={filtreStatut}
+                onChange={(e) => setFiltreStatut(e.target.value as StatutDemande | 'tous')}
+              >
+                <option value="tous">Tous les statuts</option>
+                <option value="en attente">En attente</option>
+                <option value="approuvée">Approuvée</option>
+                <option value="refusée">Refusée</option>
+              </select>
+              <FiFilter className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Demandes */}
-      <div className="space-y-4">
-        {filteredDemandes.length === 0 ? (
-          <div className="bg-white p-8 rounded-lg shadow text-center">
-            <FiCalendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">Aucune demande trouvée</p>
+      
+      {/* Results */}
+      <div>
+        <div className="mb-4">
+          <p className="text-sm text-gray-500">
+            {demandesFiltrees.length} demande{demandesFiltrees.length > 1 ? 's' : ''} trouvée{demandesFiltrees.length > 1 ? 's' : ''}
+          </p>
+        </div>
+        
+        {demandesFiltrees.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {demandesFiltrees.map((demande) => (
+              <CongeCard key={demande.id} demande={demande} />
+            ))}
           </div>
         ) : (
-          filteredDemandes.map(demande => (
-            <CongeCard key={demande.id} demande={demande} />
-          ))
+          <div className="card text-center py-8">
+            <FiFilter className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">Aucun résultat</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Aucune demande ne correspond à vos critères de recherche.
+            </p>
+          </div>
         )}
       </div>
     </div>
   )
 }
+
+export default HistoriqueConges

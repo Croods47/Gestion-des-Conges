@@ -1,182 +1,199 @@
-import { FiBook, FiCalendar, FiClock, FiInfo, FiAlertCircle } from 'react-icons/fi'
+import { FiBook, FiClock, FiCalendar, FiInfo, FiAlertCircle } from 'react-icons/fi'
 
-export default function Informations() {
+const Informations = () => {
+  const congesInfo = [
+    {
+      title: 'Congés payés',
+      description: 'Droit légal de 25 jours ouvrables par an (5 semaines)',
+      details: [
+        'Acquisition: 2,5 jours par mois travaillé',
+        'Période de référence: du 1er juin au 31 mai',
+        'Prise des congés: du 1er mai au 31 octobre (période légale)',
+        'Report possible sous conditions'
+      ],
+      icon: FiCalendar,
+      color: 'blue'
+    },
+    {
+      title: 'RTT (Réduction du Temps de Travail)',
+      description: 'Jours de repos compensateurs pour les 35h',
+      details: [
+        'Calculés selon la convention collective',
+        'Généralement entre 10 et 25 jours par an',
+        'Peuvent être imposés par l\'employeur',
+        'Pas de report automatique'
+      ],
+      icon: FiClock,
+      color: 'green'
+    },
+    {
+      title: 'Congés exceptionnels',
+      description: 'Congés pour événements familiaux',
+      details: [
+        'Mariage: 4 jours',
+        'Naissance/adoption: 3 jours',
+        'Décès conjoint/enfant: 2-3 jours',
+        'Déménagement: 1 jour (selon convention)'
+      ],
+      icon: FiInfo,
+      color: 'purple'
+    },
+    {
+      title: 'Congé maladie',
+      description: 'Arrêt de travail pour raisons médicales',
+      details: [
+        'Certificat médical obligatoire',
+        'Délai de carence possible',
+        'Indemnisation par la Sécurité Sociale',
+        'Complément employeur selon convention'
+      ],
+      icon: FiAlertCircle,
+      color: 'red'
+    }
+  ]
+  
+  const getColorClasses = (color: string) => {
+    const colors = {
+      blue: 'bg-blue-100 text-blue-600',
+      green: 'bg-green-100 text-green-600',
+      purple: 'bg-purple-100 text-purple-600',
+      red: 'bg-red-100 text-red-600'
+    }
+    return colors[color as keyof typeof colors] || colors.blue
+  }
+  
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Informations légales
-        </h1>
-        <p className="text-gray-600">
-          Tout ce que vous devez savoir sur vos droits aux congés payés
+        <h1 className="text-2xl font-bold text-gray-900">Informations légales</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Tout ce que vous devez savoir sur vos droits aux congés
         </p>
       </div>
       
-      {/* Congés payés */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center">
-            <FiCalendar className="h-6 w-6 text-blue-600 mr-3" />
-            <h2 className="text-xl font-semibold text-gray-900">Congés payés</h2>
-          </div>
-        </div>
-        <div className="p-6 space-y-4">
-          <div>
-            <h3 className="font-medium text-gray-900 mb-2">Acquisition des congés</h3>
-            <p className="text-gray-600">
-              Vous acquérez 2,5 jours ouvrables de congés payés par mois de travail effectif, 
-              soit 30 jours ouvrables (5 semaines) par an pour une année complète de travail.
-            </p>
-          </div>
-          
-          <div>
-            <h3 className="font-medium text-gray-900 mb-2">Période de référence</h3>
-            <p className="text-gray-600">
-              La période de référence s'étend du 1er juin de l'année précédente au 31 mai de l'année en cours.
-            </p>
-          </div>
-          
-          <div>
-            <h3 className="font-medium text-gray-900 mb-2">Prise des congés</h3>
-            <p className="text-gray-600">
-              Les congés peuvent être pris entre le 1er mai et le 31 octobre, sauf accord d'entreprise 
-              ou convention collective prévoyant d'autres modalités.
-            </p>
-          </div>
-        </div>
-      </div>
-      
-      {/* RTT */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center">
-            <FiClock className="h-6 w-6 text-green-600 mr-3" />
-            <h2 className="text-xl font-semibold text-gray-900">Réduction du Temps de Travail (RTT)</h2>
-          </div>
-        </div>
-        <div className="p-6 space-y-4">
-          <div>
-            <h3 className="font-medium text-gray-900 mb-2">Principe</h3>
-            <p className="text-gray-600">
-              Les jours de RTT compensent les heures travaillées au-delà de la durée légale de 35 heures par semaine.
-            </p>
-          </div>
-          
-          <div>
-            <h3 className="font-medium text-gray-900 mb-2">Attribution</h3>
-            <p className="text-gray-600">
-              Le nombre de jours RTT dépend de votre temps de travail et des accords d'entreprise. 
-              Généralement, il varie entre 10 et 25 jours par an.
-            </p>
-          </div>
-          
-          <div>
-            <h3 className="font-medium text-gray-900 mb-2">Utilisation</h3>
-            <p className="text-gray-600">
-              Les RTT peuvent généralement être pris tout au long de l'année, sous réserve des contraintes 
-              de service et de l'accord de votre manager.
-            </p>
-          </div>
-        </div>
-      </div>
-      
-      {/* Congés spéciaux */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center">
-            <FiBook className="h-6 w-6 text-purple-600 mr-3" />
-            <h2 className="text-xl font-semibold text-gray-900">Congés spéciaux</h2>
-          </div>
-        </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-medium text-gray-900 mb-2">Congé maternité</h3>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>• 16 semaines pour les 2 premiers enfants</li>
-                <li>• 26 semaines à partir du 3ème enfant</li>
-                <li>• Congé prénatal et postnatal</li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-medium text-gray-900 mb-2">Congé paternité</h3>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>• 25 jours calendaires (28 en cas de naissances multiples)</li>
-                <li>• À prendre dans les 4 mois suivant la naissance</li>
-                <li>• Dont 4 jours obligatoires</li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-medium text-gray-900 mb-2">Congé maladie</h3>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Sur prescription médicale</li>
-                <li>• Indemnisation par la Sécurité sociale</li>
-                <li>• Complément employeur selon convention</li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-medium text-gray-900 mb-2">Congé formation</h3>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Droit individuel à la formation</li>
-                <li>• Compte personnel de formation (CPF)</li>
-                <li>• Accord préalable de l'employeur</li>
-              </ul>
+      {/* Important notice */}
+      <div className="card bg-yellow-50 border-yellow-200">
+        <div className="flex">
+          <FiBook className="h-5 w-5 text-yellow-600 mt-0.5" />
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-yellow-800">
+              Information importante
+            </h3>
+            <div className="mt-2 text-sm text-yellow-700">
+              <p>
+                Ces informations sont données à titre indicatif et peuvent varier selon votre convention collective.
+                Consultez votre service RH pour des informations spécifiques à votre situation.
+              </p>
             </div>
           </div>
         </div>
       </div>
       
-      {/* Procédures */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center">
-            <FiInfo className="h-6 w-6 text-orange-600 mr-3" />
-            <h2 className="text-xl font-semibold text-gray-900">Procédures de demande</h2>
+      {/* Types de congés */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {congesInfo.map((conge, index) => (
+          <div key={index} className="card">
+            <div className="flex items-start">
+              <div className={`flex-shrink-0 p-3 rounded-lg ${getColorClasses(conge.color)}`}>
+                <conge.icon className="h-6 w-6" />
+              </div>
+              <div className="ml-4 flex-1">
+                <h3 className="text-lg font-medium text-gray-900">
+                  {conge.title}
+                </h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  {conge.description}
+                </p>
+                <ul className="mt-4 space-y-2">
+                  {conge.details.map((detail, detailIndex) => (
+                    <li key={detailIndex} className="flex items-start">
+                      <span className="flex-shrink-0 w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-3"></span>
+                      <span className="text-sm text-gray-700">{detail}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="p-6 space-y-4">
-          <div>
-            <h3 className="font-medium text-gray-900 mb-2">Délai de demande</h3>
-            <p className="text-gray-600">
-              Les demandes de congés doivent être formulées au moins 1 mois à l'avance pour les congés 
-              de plus de 2 semaines consécutives, et 2 semaines à l'avance pour les autres congés.
-            </p>
+        ))}
+      </div>
+      
+      {/* Procédure de demande */}
+      <div className="card">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">
+          Procédure de demande de congé
+        </h2>
+        <div className="space-y-4">
+          <div className="flex items-start">
+            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
+              1
+            </div>
+            <div className="ml-4">
+              <h3 className="text-sm font-medium text-gray-900">Planification</h3>
+              <p className="text-sm text-gray-600">
+                Vérifiez votre solde de congés et planifiez vos dates en tenant compte des contraintes de service.
+              </p>
+            </div>
           </div>
           
-          <div>
-            <h3 className="font-medium text-gray-900 mb-2">Validation</h3>
-            <p className="text-gray-600">
-              Votre manager dispose de 2 semaines pour valider ou refuser votre demande. 
-              En l'absence de réponse, la demande est considérée comme acceptée.
-            </p>
+          <div className="flex items-start">
+            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
+              2
+            </div>
+            <div className="ml-4">
+              <h3 className="text-sm font-medium text-gray-900">Demande</h3>
+              <p className="text-sm text-gray-600">
+                Soumettez votre demande via l'application en précisant les dates et le motif.
+              </p>
+            </div>
           </div>
           
-          <div>
-            <h3 className="font-medium text-gray-900 mb-2">Modification ou annulation</h3>
-            <p className="text-gray-600">
-              Vous pouvez modifier ou annuler votre demande tant qu'elle n'a pas été validée. 
-              Après validation, toute modification nécessite l'accord de votre manager.
-            </p>
+          <div className="flex items-start">
+            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
+              3
+            </div>
+            <div className="ml-4">
+              <h3 className="text-sm font-medium text-gray-900">Validation</h3>
+              <p className="text-sm text-gray-600">
+                Votre manager examine la demande et vous notifie de sa décision.
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-start">
+            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
+              4
+            </div>
+            <div className="ml-4">
+              <h3 className="text-sm font-medium text-gray-900">Confirmation</h3>
+              <p className="text-sm text-gray-600">
+                Une fois approuvée, votre demande est enregistrée et votre solde mis à jour.
+              </p>
+            </div>
           </div>
         </div>
       </div>
       
-      {/* Avertissement */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <div className="flex items-start">
-          <FiAlertCircle className="h-6 w-6 text-yellow-600 mr-3 mt-0.5" />
+      {/* Contacts utiles */}
+      <div className="card">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">
+          Contacts utiles
+        </h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <h3 className="font-medium text-yellow-800 mb-2">Important</h3>
-            <p className="text-yellow-700 text-sm">
-              Ces informations sont données à titre indicatif et peuvent varier selon votre convention collective 
-              ou les accords d'entreprise. Pour toute question spécifique, n'hésitez pas à contacter le service RH.
-            </p>
+            <h3 className="text-sm font-medium text-gray-900">Service RH</h3>
+            <p className="text-sm text-gray-600">rh@entreprise.fr</p>
+            <p className="text-sm text-gray-600">01 23 45 67 89</p>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-gray-900">Support technique</h3>
+            <p className="text-sm text-gray-600">support@entreprise.fr</p>
+            <p className="text-sm text-gray-600">01 23 45 67 90</p>
           </div>
         </div>
       </div>
     </div>
   )
 }
+
+export default Informations
