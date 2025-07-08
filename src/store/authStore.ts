@@ -1,5 +1,17 @@
 import { create } from 'zustand'
-import { User } from '../types'
+
+export interface User {
+  id: string
+  nom: string
+  prenom: string
+  email: string
+  role: 'employe' | 'manager' | 'admin'
+  department: string
+  leaveBalance: number
+  soldeConges: number
+  dateEmbauche: string
+  startDate: string
+}
 
 interface AuthState {
   user: User | null

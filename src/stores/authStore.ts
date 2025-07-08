@@ -5,7 +5,8 @@ interface AuthState {
   user: User | null
   loading: boolean
   error: string | null
-  
+
+  // Actions
   login: (email: string, password: string) => Promise<boolean>
   logout: () => void
   clearError: () => void
@@ -46,10 +47,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: async (email: string, password: string) => {
     set({ loading: true, error: null })
-    
+
     // Simulation d'un délai d'authentification
     await new Promise(resolve => setTimeout(resolve, 1000))
-    
+
     const user = demoUsers.find(u => u.email === email)
     
     if (user && password === 'demo123') {

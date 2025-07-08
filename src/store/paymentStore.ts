@@ -1,5 +1,34 @@
 import { create } from 'zustand'
-import { PaymentMethod, Transaction, Subscription } from '../types'
+
+export interface PaymentMethod {
+  id: string
+  type: 'card' | 'bank_account'
+  last4: string
+  brand: string
+  expiryMonth: number
+  expiryYear: number
+  isDefault: boolean
+}
+
+export interface Transaction {
+  id: string
+  amount: number
+  currency: string
+  status: 'succeeded' | 'pending' | 'failed'
+  description: string
+  date: string
+  paymentMethod: string
+}
+
+export interface Subscription {
+  id: string
+  plan: 'basic' | 'premium' | 'enterprise'
+  status: 'active' | 'canceled' | 'past_due'
+  currentPeriodStart: string
+  currentPeriodEnd: string
+  amount: number
+  currency: string
+}
 
 interface PaymentState {
   paymentMethods: PaymentMethod[]

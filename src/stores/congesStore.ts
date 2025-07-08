@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { DemandeConge, SoldeConges, TypeConge, StatutDemande } from '../types'
+import { DemandeConge, SoldeConges, StatutDemande, TypeConge } from '../types'
 
 interface CongesState {
   demandes: DemandeConge[]
@@ -8,7 +8,7 @@ interface CongesState {
   error: string | null
 
   // Actions
-  ajouterDemande: (demande: Omit<DemandeConge, 'id' | 'dateCreation' | 'statut'>) => void
+  ajouterDemande: (demande: Omit<DemandeConge, 'id' | 'statut' | 'dateCreation'>) => void
   modifierStatutDemande: (id: string, statut: StatutDemande, commentaire?: string, approuvePar?: string) => void
   getDemandesParEmploye: (employeId: string) => DemandeConge[]
   getToutesLesDemandes: () => DemandeConge[]
@@ -32,49 +32,51 @@ const demandesDemo: DemandeConge[] = [
     statut: 'approuve',
     dateCreation: '2024-01-15T10:00:00Z',
     approuvePar: 'Marie Martin',
-    dateApprobation: '2024-01-16T14:30:00Z'
+    dateApprobation: '2024-01-16T14:30:00Z',
+    commentaire: 'Demande approuvée'
   },
   {
     id: '2',
-    employeId: '1',
-    employeNom: 'Dupont',
-    employePrenom: 'Jean',
-    utilisateurNom: 'Dupont',
-    utilisateurPrenom: 'Jean',
-    dateDebut: '2024-03-10',
-    dateFin: '2024-03-12',
-    nbJours: 3,
-    motif: 'Rendez-vous médical',
-    typeConge: 'maladie',
-    statut: 'en_attente',
-    dateCreation: '2024-01-20T09:15:00Z'
-  },
-  {
-    id: '3',
     employeId: '2',
     employeNom: 'Martin',
     employePrenom: 'Marie',
     utilisateurNom: 'Martin',
     utilisateurPrenom: 'Marie',
-    dateDebut: '2024-04-01',
-    dateFin: '2024-04-05',
-    nbJours: 5,
-    motif: 'Congés de Pâques',
-    typeConge: 'conges_payes',
+    dateDebut: '2024-03-01',
+    dateFin: '2024-03-01',
+    nbJours: 1,
+    motif: 'Rendez-vous médical',
+    typeConge: 'rtt',
     statut: 'en_attente',
-    dateCreation: '2024-01-25T16:45:00Z'
+    dateCreation: '2024-02-20T09:15:00Z'
+  },
+  {
+    id: '3',
+    employeId: '1',
+    employeNom: 'Dupont',
+    employePrenom: 'Jean',
+    utilisateurNom: 'Dupont',
+    utilisateurPrenom: 'Jean',
+    dateDebut: '2024-04-10',
+    dateFin: '2024-04-12',
+    nbJours: 3,
+    motif: 'Week-end prolongé',
+    typeConge: 'conges_payes',
+    statut: 'refuse',
+    dateCreation: '2024-03-01T16:45:00Z',
+    approuvePar: 'Pierre Durand',
+    dateApprobation: '2024-03-02T11:20:00Z',
+    commentaire: 'Période de forte activité, report souhaité'
   }
 ]
 
-const soldeDemo: Record<string, SoldeConges> = {
-  '1': { congesPayes: 20, rtt: 8, anciennete: 2 },
-  '2': { congesPayes: 25, rtt: 10, anciennete: 5 },
-  '3': { congesPayes: 30, rtt: 12, anciennete: 8 }
-}
-
 export const useCongesStore = create<CongesState>((set, get) => ({
   demandes: demandesDemo,
-  solde: { congesPayes: 0, rtt: 0, anciennete: 0 },
+  solde: {
+    congesPayes: 25,
+    rtt: 8,
+    anciennete: 3
+  },
   loading: false,
   error: null,
 
@@ -82,17 +84,17 @@ export const useCongesStore = create<CongesState>((set, get) => ({
     const demande: DemandeConge = {
       ...nouvelleDemande,
       id: Date.now().toString(),
-      dateCreation: new Date().toISOString(),
-      statut: 'en_attente'
+      statut: 'en_attente',
+      dateCreation: new Date().toISOString()
     }
-    
-    set((state) => ({
+
+    set(state => ({
       demandes: [...state.demandes, demande]
     }))
   },
 
   modifierStatutDemande: (id, statut, commentaire, approuvePar) => {
-    set((state) => ({
+    set(state => ({
       demandes: state.demandes.map(demande =>
         demande.id === id
           ? {
@@ -116,7 +118,15 @@ export const useCongesStore = create<CongesState>((set, get) => ({
   },
 
   fetchSoldeConges: (employeId) => {
-    const solde = soldeDemo[employeId] || { congesPayes: 25, rtt: 10, anciennete: 1 }
+    // Simulation d'un appel API
+    const soldes = {
+      '1': { congesPayes: 22, rtt: 6, anciennete: 3 },
+      '2': { congesPayes: 25, rtt: 8, anciennete: 5 },
+      '3': { congesPayes: 30, rtt: 10, anciennete: 8 }
+    }
+
+    const solde = soldes[employeId as keyof typeof soldes] || { congesPayes: 25, rtt: 8, anciennete: 1 }
+    
     set({ solde })
   }
 }))

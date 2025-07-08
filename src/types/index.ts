@@ -1,22 +1,10 @@
-export type TypeConge = 
-  | 'conges_payes' 
-  | 'rtt' 
-  | 'maladie' 
-  | 'maternite' 
-  | 'paternite' 
-  | 'formation'
-
-export type StatutDemande = 'en_attente' | 'approuve' | 'refuse'
-
-export type Role = 'employe' | 'manager' | 'admin'
-
 export interface User {
   id: string
   email: string
   nom: string
   prenom: string
-  role: Role
-  departement?: string
+  role: 'employe' | 'manager' | 'admin'
+  departement: string
 }
 
 export interface DemandeConge {
@@ -38,8 +26,22 @@ export interface DemandeConge {
   dateApprobation?: string
 }
 
+export type TypeConge = 'conges_payes' | 'rtt' | 'maladie' | 'maternite' | 'paternite' | 'formation' | 'autre'
+
+export type StatutDemande = 'en_attente' | 'approuve' | 'refuse'
+
 export interface SoldeConges {
   congesPayes: number
   rtt: number
   anciennete: number
+}
+
+export interface Employe {
+  id: string
+  nom: string
+  prenom: string
+  email: string
+  departement: string
+  dateEmbauche: string
+  soldeConges: SoldeConges
 }

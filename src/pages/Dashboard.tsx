@@ -1,25 +1,11 @@
 import { useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { useCongesStore } from '../stores/congesStore'
-import { 
-  Calendar, 
-  Plus, 
-  Clock, 
-  CheckCircle, 
-  XCircle,
-  Users,
-  TrendingUp
-} from 'lucide-react'
+import { Calendar, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 
 export default function Dashboard() {
   const { user } = useAuthStore()
-  const { 
-    getDemandesParEmploye, 
-    getToutesLesDemandes, 
-    solde, 
-    fetchSoldeConges 
-  } = useCongesStore()
+  const { demandes, solde, fetchSoldeConges, getDemandesParEmploye, getToutesLesDemandes } = useCongesStore()
 
   useEffect(() => {
     if (user) {
@@ -29,208 +15,252 @@ export default function Dashboard() {
 
   if (!user) return null
 
-  const demandes = user.role === 'admin' 
-    ? getToutesLesDemandes()
-    : getDemandesParEmploye(user.id)
+  const mesDemandesRecentes = user.role === 'admin' 
+    ? getToutesLesDemandes().slice(0, 5)
+    : getDemandesParEmploye(user.id).slice(0, 5)
 
   const stats = {
-    total: demandes.length,
     enAttente: demandes.filter(d => d.statut === 'en_attente').length,
     approuvees: demandes.filter(d => d.statut === 'approuve').length,
     refusees: demandes.filter(d => d.statut === 'refuse').length
   }
 
-  const recentDemandes = demandes
-    .sort((a, b) => new Date(b.dateCreation).getTime() - new Date(a.dateCreation).getTime())
-    .slice(0, 5)
-
   const getStatutIcon = (statut: string) => {
     switch (statut) {
       case 'approuve':
-        return <CheckCircle className="w-4 h-4 text-green-500" />
+        return <CheckCircle className="w-5 h-5 text-green-500" />
       case 'refuse':
-        return <XCircle className="w-4 h-4 text-red-500" />
+        return <XCircle className="w-5 h-5 text-red-500" />
       default:
-        return <Clock className="w-4 h-4 text-yellow-500" />
+        return <AlertCircle className="w-5 h-5 text-yellow-500" />
     }
   }
 
-  const getStatutBadge = (statut: string) => {
-    const baseClasses = "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+  const getStatutText = (statut: string) => {
     switch (statut) {
       case 'approuve':
-        return `${baseClasses} bg-green-100 text-green-800`
+        return 'Approuvé'
       case 'refuse':
-        return `${baseClasses} bg-red-100 text-red-800`
+        return 'Refusé'
       default:
-        return `${baseClasses} bg-yellow-100 text-yellow-800`
+        return 'En attente'
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR')
+  const getTypeCongeText = (type: string) => {
+    switch (type) {
+      case 'conges_payes':
+        return 'Congés payés'
+      case 'rtt':
+        return 'RTT'
+      case 'maladie':
+        return 'Maladie'
+      case 'maternite':
+        return 'Maternité'
+      case 'paternite':
+        return 'Paternité'
+      case 'formation':
+        return 'Formation'
+      default:
+        return 'Autre'
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* En-tête */}
+    <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <div className="px-4 py-6 sm:px-0">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Bonjour, {user.prenom} {user.nom}
+          <h1 className="text-3xl font-bold text-gray-900">
+            Bonjour {user.prenom} !
           </h1>
-          <p className="text-gray-600">
-            Voici un aperçu de vos congés et demandes
+          <p className="mt-2 text-gray-600">
+            Voici un aperçu de vos congés et demandes récentes.
           </p>
         </div>
 
-        {/* Solde de congés */}
+        {/* Solde des congés */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <Calendar className="w-8 h-8 text-blue-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Congés payés</p>
-                <p className="text-2xl font-semibold text-gray-900">{solde.congesPayes} jours</p>
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <Calendar className="h-6 w-6 text-blue-400" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">
+                      Congés payés restants
+                    </dt>
+                    <dd className="text-lg font-medium text-gray-900">
+                      {solde.congesPayes} jours
+                    </dd>
+                  </dl>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <Clock className="w-8 h-8 text-green-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">RTT</p>
-                <p className="text-2xl font-semibold text-gray-900">{solde.rtt} jours</p>
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <Clock className="h-6 w-6 text-green-400" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">
+                      RTT restants
+                    </dt>
+                    <dd className="text-lg font-medium text-gray-900">
+                      {solde.rtt} jours
+                    </dd>
+                  </dl>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <TrendingUp className="w-8 h-8 text-purple-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Ancienneté</p>
-                <p className="text-2xl font-semibold text-gray-900">{solde.anciennete} ans</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Statistiques des demandes */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <Users className="w-8 h-8 text-gray-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
-                  {user.role === 'admin' ? 'Total demandes' : 'Mes demandes'}
-                </p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.total}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <Clock className="w-8 h-8 text-yellow-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">En attente</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.enAttente}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <CheckCircle className="w-8 h-8 text-green-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Approuvées</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.approuvees}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <XCircle className="w-8 h-8 text-red-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Refusées</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.refusees}</p>
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <CheckCircle className="h-6 w-6 text-purple-400" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">
+                      Ancienneté
+                    </dt>
+                    <dd className="text-lg font-medium text-gray-900">
+                      {solde.anciennete} {solde.anciennete > 1 ? 'ans' : 'an'}
+                    </dd>
+                  </dl>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Actions rapides */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Actions rapides</h3>
-            <div className="space-y-3">
-              <Link
-                to="/demande"
-                className="flex items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200"
-              >
-                <Plus className="w-5 h-5 text-blue-600 mr-3" />
-                <span className="text-blue-700 font-medium">Nouvelle demande de congé</span>
-              </Link>
-              
-              <Link
-                to="/historique"
-                className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-              >
-                <Calendar className="w-5 h-5 text-gray-600 mr-3" />
-                <span className="text-gray-700 font-medium">Consulter l'historique</span>
-              </Link>
+        {/* Statistiques des demandes (pour admin) */}
+        {user.role === 'admin' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <AlertCircle className="h-6 w-6 text-yellow-400" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">
+                        Demandes en attente
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.enAttente}
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-              {user.role === 'admin' && (
-                <Link
-                  to="/admin"
-                  className="flex items-center p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors duration-200"
-                >
-                  <Users className="w-5 h-5 text-purple-600 mr-3" />
-                  <span className="text-purple-700 font-medium">Administration</span>
-                </Link>
-              )}
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <CheckCircle className="h-6 w-6 text-green-400" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">
+                        Demandes approuvées
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.approuvees}
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <XCircle className="h-6 w-6 text-red-400" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">
+                        Demandes refusées
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.refusees}
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+        )}
 
-          {/* Demandes récentes */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              {user.role === 'admin' ? 'Demandes récentes' : 'Mes demandes récentes'}
+        {/* Demandes récentes */}
+        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+          <div className="px-4 py-5 sm:px-6">
+            <h3 className="text-lg leading-6 font-medium text-gray-900">
+              {user.role === 'admin' ? 'Demandes récentes (toutes)' : 'Mes demandes récentes'}
             </h3>
-            
-            {recentDemandes.length === 0 ? (
-              <p className="text-gray-500 text-sm">Aucune demande récente</p>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">
+              Aperçu des dernières demandes de congés
+            </p>
+          </div>
+          <ul className="divide-y divide-gray-200">
+            {mesDemandesRecentes.length === 0 ? (
+              <li className="px-4 py-4 text-center text-gray-500">
+                Aucune demande trouvée
+              </li>
             ) : (
-              <div className="space-y-3">
-                {recentDemandes.map((demande) => (
-                  <div key={demande.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex-1">
-                      {user.role === 'admin' && (
-                        <p className="text-sm font-medium text-gray-900">
-                          {demande.employePrenom} {demande.employeNom}
-                        </p>
-                      )}
-                      <p className="text-sm text-gray-600">
-                        {formatDate(demande.dateDebut)} - {formatDate(demande.dateFin)}
-                      </p>
-                      <p className="text-xs text-gray-500">{demande.nbJours} jour{demande.nbJours > 1 ? 's' : ''}</p>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
+              mesDemandesRecentes.map((demande) => (
+                <li key={demande.id} className="px-4 py-4 hover:bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
                       {getStatutIcon(demande.statut)}
-                      <span className={getStatutBadge(demande.statut)}>
-                        {demande.statut === 'approuve' ? 'Approuvé' : 
-                         demande.statut === 'refuse' ? 'Refusé' : 'En attente'}
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {user.role === 'admin' 
+                            ? `${demande.employePrenom} ${demande.employeNom}`
+                            : getTypeCongeText(demande.typeConge)
+                          }
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Du {new Date(demande.dateDebut).toLocaleDateString('fr-FR')} au{' '}
+                          {new Date(demande.dateFin).toLocaleDateString('fr-FR')} ({demande.nbJours} jour{demande.nbJours > 1 ? 's' : ''})
+                        </div>
+                        {demande.motif && (
+                          <div className="text-sm text-gray-400 mt-1">
+                            {demande.motif}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        demande.statut === 'approuve' 
+                          ? 'bg-green-100 text-green-800'
+                          : demande.statut === 'refuse'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {getStatutText(demande.statut)}
                       </span>
                     </div>
                   </div>
-                ))}
-              </div>
+                </li>
+              ))
             )}
-          </div>
+          </ul>
         </div>
       </div>
     </div>

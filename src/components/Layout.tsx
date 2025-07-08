@@ -1,101 +1,126 @@
-import { Outlet, Link, useLocation } from 'react-router-dom'
+import { ReactNode } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { 
-  FiHome, 
-  FiCalendar, 
-  FiClock, 
-  FiInfo, 
-  FiSettings, 
-  FiLogOut,
-  FiCreditCard
-} from 'react-icons/fi'
+  Home, 
+  Calendar, 
+  History, 
+  Settings, 
+  LogOut, 
+  User 
+} from 'lucide-react'
 
-export default function Layout() {
+interface LayoutProps {
+  children: ReactNode
+}
+
+export default function Layout({ children }: LayoutProps) {
   const { user, logout } = useAuthStore()
   const location = useLocation()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
 
   const navigation = [
-    { name: 'Tableau de bord', href: '/', icon: FiHome },
-    { name: 'Demande de congé', href: '/demande', icon: FiCalendar },
-    { name: 'Historique', href: '/historique', icon: FiClock },
-    { name: 'Informations', href: '/infos', icon: FiInfo },
-    { name: 'Paiements', href: '/payments', icon: FiCreditCard },
+    { name: 'Tableau de bord', href: '/', icon: Home },
+    { name: 'Nouvelle demande', href: '/demande', icon: Calendar },
+    { name: 'Historique', href: '/historique', icon: History },
+    ...(user?.role === 'admin' ? [{ name: 'Administration', href: '/admin', icon: Settings }] : [])
   ]
-
-  if (user?.role === 'admin' || user?.role === 'manager') {
-    navigation.push({ name: 'Administration', href: '/admin', icon: FiSettings })
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg">
-        <div className="flex h-16 items-center justify-center border-b border-gray-200">
-          <h1 className="text-xl font-bold text-gray-900">Gestion Congés</h1>
-        </div>
-        
-        <div className="flex flex-col justify-between h-full pb-4">
-          <nav className="mt-8 px-4">
-            <ul className="space-y-2">
-              {navigation.map((item) => {
-                const Icon = item.icon
-                const isActive = location.pathname === item.href
-                return (
-                  <li key={item.name}>
+      {/* Navigation */}
+      <nav className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex">
+              <div className="flex-shrink-0 flex items-center">
+                <Calendar className="h-8 w-8 text-blue-600" />
+                <span className="ml-2 text-xl font-bold text-gray-900">
+                  Gestion Congés
+                </span>
+              </div>
+              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                {navigation.map((item) => {
+                  const Icon = item.icon
+                  const isActive = location.pathname === item.href
+                  return (
                     <Link
+                      key={item.name}
                       to={item.href}
-                      className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
                         isActive
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                          ? 'border-blue-500 text-gray-900'
+                          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                       }`}
                     >
-                      <Icon className="mr-3 h-5 w-5" />
+                      <Icon className="w-4 h-4 mr-2" />
                       {item.name}
                     </Link>
-                  </li>
-                )
-              })}
-            </ul>
-          </nav>
-
-          <div className="px-4">
-            <div className="border-t border-gray-200 pt-4">
-              <div className="flex items-center px-4 py-2">
-                <div className="flex-shrink-0">
-                  <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
-                    <span className="text-sm font-medium text-white">
-                      {user?.prenom?.[0]}{user?.nom?.[0]}
+                  )
+                })}
+              </div>
+            </div>
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <User className="h-5 w-5 text-gray-400" />
+                    <span className="text-sm text-gray-700">
+                      {user?.prenom} {user?.nom}
+                    </span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {user?.role === 'admin' ? 'Admin' : user?.role === 'manager' ? 'Manager' : 'Employé'}
                     </span>
                   </div>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-900">
-                    {user?.prenom} {user?.nom}
-                  </p>
-                  <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+                  <button
+                    onClick={handleLogout}
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <LogOut className="w-4 h-4 mr-1" />
+                    Déconnexion
+                  </button>
                 </div>
               </div>
-              <button
-                onClick={logout}
-                className="mt-2 flex w-full items-center px-4 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-colors"
-              >
-                <FiLogOut className="mr-3 h-5 w-5" />
-                Déconnexion
-              </button>
             </div>
           </div>
         </div>
-      </div>
+
+        {/* Mobile menu */}
+        <div className="sm:hidden">
+          <div className="pt-2 pb-3 space-y-1">
+            {navigation.map((item) => {
+              const Icon = item.icon
+              const isActive = location.pathname === item.href
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+                    isActive
+                      ? 'bg-blue-50 border-blue-500 text-blue-700'
+                      : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <Icon className="w-4 h-4 mr-3" />
+                    {item.name}
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      </nav>
 
       {/* Main content */}
-      <div className="pl-64">
-        <main className="py-8">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <Outlet />
-          </div>
-        </main>
-      </div>
+      <main className="flex-1">
+        {children}
+      </main>
     </div>
   )
 }
